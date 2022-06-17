@@ -25,3 +25,7 @@ export type AchievementTracker = AchievementData & {
 type AchievementResponse = {
   data: AchievementTracker[];
 };
+
+type AchievementErrorResponse = {
+  error: string;
+};

@@ -6,12 +6,13 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Layout from '../components/Layout';
 import AchievementBacklog from '../components/AchievementBacklog';
-import { AchievementResponse } from '../types/achievements';
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+import { AchievementResponse, AchievementErrorResponse } from '../types/achievements';
 
 const Dashboard: NextPage = function Dashboard() {
-  const { data, error } = useSWR<AchievementResponse>('/api/achievements', fetcher);
+  const { data, error } = useSWR<AchievementResponse, AchievementErrorResponse>(
+    '/api/achievements',
+    (apiUrl: string) => fetch(apiUrl).then((res) => res.json()),
+  );
 
   if (!data) {
     return (
@@ -28,7 +29,7 @@ const Dashboard: NextPage = function Dashboard() {
   if (error) {
     return (
       <Layout>
-        <div>{error}</div>
+        <div>{error.error}</div>
       </Layout>
     );
   }

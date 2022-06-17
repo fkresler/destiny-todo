@@ -30,8 +30,8 @@ function Header() {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Destiny Achievement Tracker
         </Typography>
-        <Link href="/login">
-          <Button color="inherit">Login</Button>
+        <Link href="/dashboard">
+          <Button color="inherit">My Dashboard</Button>
         </Link>
       </Toolbar>
     </AppBar>

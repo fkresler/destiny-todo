@@ -2,5 +2,8 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "extends": ["airbnb", "airbnb/hooks", "airbnb-typescript", "next/core-web-vitals"]
+  "extends": ["airbnb", "airbnb/hooks", "airbnb-typescript", "next/core-web-vitals"],
+  "rules": {
+    "react/require-default-props": "off"
+  }
 }

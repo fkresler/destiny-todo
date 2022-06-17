@@ -50,7 +50,7 @@ function AchievementCard({ tracker }: AchievementCardProps) {
           id={`card-menu-${id}`}
           anchorEl={anchorEl}
           open={open}
-          onClose={handleMenuClick}
+          onClose={handleMenuClose}
           MenuListProps={{
             'aria-labelledby': 'basic-button',
           }}

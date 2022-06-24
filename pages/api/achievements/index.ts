@@ -1,11 +1,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { AchievementResponse, AchievementTracker } from '../../types/achievements';
+import { AchievementCollectionResponse, InstancedAchievementData } from '../../../types/achievements';
 
-const mockData: AchievementTracker[] = [{
+const mockData: InstancedAchievementData[] = [{
   id: 'test',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Weekly PvP',
   description: 'Play PvP bois! Also record it!',
   label: ['PvP'],
@@ -14,8 +14,8 @@ const mockData: AchievementTracker[] = [{
   reset: 'Weekly',
 }, {
   id: 'test1',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Weekly PvP',
   description: 'Play PvP bois! Also record it!',
   label: ['PvP'],
@@ -24,8 +24,8 @@ const mockData: AchievementTracker[] = [{
   reset: 'Weekly',
 }, {
   id: 'test2',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Weekly PvP',
   description: 'Play PvP bois! Also record it!',
   label: ['PvP'],
@@ -34,30 +34,30 @@ const mockData: AchievementTracker[] = [{
   reset: 'Weekly',
 }, {
   id: 'test3',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Focused Dungeon',
   description: 'Dungeons rock',
   group: 'Weekly',
   reset: 'Weekly',
 }, {
   id: 'test4',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Solo Flawless Pit of Heresy',
   description: 'Hard but doable',
   group: 'Lifetime',
 }, {
   id: 'test5',
+  userId: 'test-user',
   checked: false,
-  isSuggested: true,
   title: 'Season Pass Rank 100',
   group: 'Seasonal',
 }];
 
-export default function handler(
+export default function achievementsHandler(
   req: NextApiRequest,
-  res: NextApiResponse<AchievementResponse>,
+  res: NextApiResponse<AchievementCollectionResponse>,
 ) {
   res.status(200).json({ data: mockData });
 }

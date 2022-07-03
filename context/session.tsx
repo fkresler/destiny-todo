@@ -11,6 +11,7 @@ interface SessionContextDefinition {
   accessToken: string | null;
   refreshToken: string | null;
   membershipId: string | null;
+  goToExternalLogin: () => void;
   login: (code?: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => void;
@@ -35,14 +36,18 @@ export const SessionContext = React.createContext<SessionContextDefinition>({
   accessToken: null,
   refreshToken: null,
   membershipId: null,
+  goToExternalLogin: () => {},
   login: async () => {},
   refresh: async () => {},
   logout: () => {},
 });
 
+const TIMER_ONE_HOUR = 60 * 60 * 1000;
 const LOCAL_ACCESS_TOKEN_KEY = 'bungie-access-token';
 const LOCAL_REFRESH_TOKEN_KEY = 'bungie-refresh-token';
 const LOCAL_MEMBERSHIP_ID = 'bungie-membership-id';
+const REFRESH_TIMER = TIMER_ONE_HOUR;
+const LAST_REFRESH_DATETIME_KEY = 'bungie-refresh-datetime';
 
 export const LOGIN_AUTHORIZE_URL = `https://www.bungie.net/en/OAuth/Authorize?client_id=${process.env.NEXT_PUBLIC_BUNGIE_OAUTH_CLIENT_ID}&response_type=code`;
 
@@ -55,22 +60,23 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const router = useRouter();
 
-  console.log('Rendering SessionProvider');
-
   const redirectToExternalLogin = React.useCallback(() => {
     router.push(LOGIN_AUTHORIZE_URL);
   }, [router]);
 
   const login = React.useCallback(async (code?: string) => {
     console.log('Calling login');
+
     if (isLoggedIn) {
-      return;
+      throw new Error('User is already logged in');
     }
+
     if (!code) {
-      redirectToExternalLogin();
+      throw new Error('Logging in with Bungie API requires a code');
     }
-    setIsLoading(true);
+
     try {
+      setIsLoading(true);
       const result = await fetch('https://www.bungie.net/platform/app/oauth/token/', {
         method: 'post',
         headers: new Headers({
@@ -89,17 +95,24 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setIsLoading(false);
     } catch (e) {
       console.error('Error on login', e);
-      // redirectToExternalLogin();
     }
-  }, [isLoggedIn, redirectToExternalLogin]);
+  }, [isLoggedIn]);
 
   const refresh = React.useCallback(async () => {
     console.log('Calling refresh');
+
     if (!refreshToken) {
       throw new Error('Cannot refresh without token');
     }
-    setIsLoading(true);
+
+    const previousRefresh = window.localStorage.getItem(LAST_REFRESH_DATETIME_KEY);
+    if (previousRefresh
+      && ((new Date().getTime() - new Date(previousRefresh).getTime()) < REFRESH_TIMER)) {
+      throw new Error(`Last refresh was less than ${REFRESH_TIMER}ms ago`);
+    }
+
     try {
+      setIsLoading(true);
       const result = await fetch('https://www.bungie.net/platform/app/oauth/token/', {
         method: 'post',
         headers: new Headers({
@@ -114,17 +127,23 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setRefreshToken(resultJson.refresh_token);
       setIsLoggedIn(true);
       setIsLoading(false);
+      window.localStorage.setItem(LAST_REFRESH_DATETIME_KEY, new Date().toString());
     } catch {
+      console.error('Could not refresh current session, probably need to log in again');
       redirectToExternalLogin();
     }
   }, [redirectToExternalLogin, refreshToken]);
 
-  const logout = () => {
-    setIsLoggedIn(false);
+  const logout = React.useCallback(() => {
+    window.localStorage.removeItem(LOCAL_ACCESS_TOKEN_KEY);
+    window.localStorage.removeItem(LOCAL_REFRESH_TOKEN_KEY);
+    window.localStorage.removeItem(LOCAL_MEMBERSHIP_ID);
     setAccessToken(null);
     setRefreshToken(null);
     setMembershipId(null);
-  };
+    setIsLoggedIn(false);
+    router.push('/');
+  }, [router]);
 
   React.useEffect(() => {
     console.log('Initial reading from localStorage');
@@ -134,15 +153,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
     setAccessToken(localAccessToken);
     setMembershipId(localMembershipId);
     setRefreshToken(localRefreshToken);
-    if (localRefreshToken) {
-      try {
-        refresh();
-      } catch {
-        redirectToExternalLogin();
-      }
-    } else {
-      setIsLoading(false);
-    }
   }, [refresh, redirectToExternalLogin]);
 
   React.useEffect(() => {
@@ -169,10 +179,21 @@ export function SessionProvider({ children }: SessionProviderProps) {
     accessToken,
     refreshToken,
     membershipId,
+    goToExternalLogin: redirectToExternalLogin,
     login,
     refresh,
     logout,
-  }), [isLoading, isLoggedIn, accessToken, refreshToken, membershipId, login, refresh]);
+  }), [
+    isLoading,
+    isLoggedIn,
+    accessToken,
+    refreshToken,
+    membershipId,
+    redirectToExternalLogin,
+    login,
+    refresh,
+    logout,
+  ]);
 
   return (
     <SessionContext.Provider value={providerValue}>

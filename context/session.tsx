@@ -153,6 +153,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     setAccessToken(localAccessToken);
     setMembershipId(localMembershipId);
     setRefreshToken(localRefreshToken);
+    setIsLoading(false);
   }, [refresh, redirectToExternalLogin]);
 
   React.useEffect(() => {

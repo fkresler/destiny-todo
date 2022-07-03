@@ -11,7 +11,7 @@ interface SessionContextDefinition {
   accessToken: string | null;
   refreshToken: string | null;
   membershipId: string | null;
-  login: (code: string) => Promise<void>;
+  login: (code?: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => void;
 }
@@ -44,7 +44,7 @@ const LOCAL_ACCESS_TOKEN_KEY = 'bungie-access-token';
 const LOCAL_REFRESH_TOKEN_KEY = 'bungie-refresh-token';
 const LOCAL_MEMBERSHIP_ID = 'bungie-membership-id';
 
-export const LOGIN_AUTHORIZE_URL = `https://www.bungie.net/en/OAuth/Authorize?client_id=${process.env.BUNGIE_OAUTH_CLIENT_ID}&response_type=code`;
+export const LOGIN_AUTHORIZE_URL = `https://www.bungie.net/en/OAuth/Authorize?client_id=${process.env.NEXT_PUBLIC_BUNGIE_OAUTH_CLIENT_ID}&response_type=code`;
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
@@ -55,22 +55,28 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const router = useRouter();
 
+  console.log('Rendering SessionProvider');
+
   const redirectToExternalLogin = React.useCallback(() => {
     router.push(LOGIN_AUTHORIZE_URL);
   }, [router]);
 
-  const login = React.useCallback(async (code: string) => {
-    setIsLoading(true);
+  const login = React.useCallback(async (code?: string) => {
+    console.log('Calling login');
+    if (isLoggedIn) {
+      return;
+    }
     if (!code) {
       redirectToExternalLogin();
     }
+    setIsLoading(true);
     try {
       const result = await fetch('https://www.bungie.net/platform/app/oauth/token/', {
         method: 'post',
         headers: new Headers({
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: `client_id=${process.env.BUNGIE_OAUTH_CLIENT_ID}&grant_type=authorization_code&code=${code}`,
+        body: `client_id=${process.env.NEXT_PUBLIC_BUNGIE_OAUTH_CLIENT_ID}&grant_type=authorization_code&code=${code}`,
       });
       if (!result.ok) {
         throw new Error('Login failed');
@@ -81,24 +87,25 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setMembershipId(resultJson.membership_id);
       setIsLoggedIn(true);
       setIsLoading(false);
-    } catch {
-      redirectToExternalLogin();
+    } catch (e) {
+      console.error('Error on login', e);
+      // redirectToExternalLogin();
     }
-  }, [redirectToExternalLogin]);
+  }, [isLoggedIn, redirectToExternalLogin]);
 
   const refresh = React.useCallback(async () => {
-    setIsLoading(true);
-    const localRefreshToken = window.localStorage.getItem(LOCAL_REFRESH_TOKEN_KEY);
-    if (!localRefreshToken) {
-      redirectToExternalLogin();
+    console.log('Calling refresh');
+    if (!refreshToken) {
+      throw new Error('Cannot refresh without token');
     }
+    setIsLoading(true);
     try {
       const result = await fetch('https://www.bungie.net/platform/app/oauth/token/', {
         method: 'post',
         headers: new Headers({
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: `grant_type=refresh_token&refreshToken=${localRefreshToken}`,
+        body: `grant_type=refresh_token&refreshToken=${refreshToken}`,
       });
       if (!result.ok) {
         throw new Error('Refresh failed');
@@ -110,7 +117,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     } catch {
       redirectToExternalLogin();
     }
-  }, [redirectToExternalLogin]);
+  }, [redirectToExternalLogin, refreshToken]);
 
   const logout = () => {
     setIsLoggedIn(false);
@@ -120,30 +127,41 @@ export function SessionProvider({ children }: SessionProviderProps) {
   };
 
   React.useEffect(() => {
+    console.log('Initial reading from localStorage');
     const localAccessToken = window.localStorage.getItem(LOCAL_ACCESS_TOKEN_KEY);
     const localRefreshToken = window.localStorage.getItem(LOCAL_REFRESH_TOKEN_KEY);
     const localMembershipId = window.localStorage.getItem(LOCAL_MEMBERSHIP_ID);
     setAccessToken(localAccessToken);
-    setRefreshToken(localRefreshToken);
     setMembershipId(localMembershipId);
+    setRefreshToken(localRefreshToken);
     if (localRefreshToken) {
-      refresh();
+      try {
+        refresh();
+      } catch {
+        redirectToExternalLogin();
+      }
     } else {
       setIsLoading(false);
     }
-  }, [refresh]);
+  }, [refresh, redirectToExternalLogin]);
 
   React.useEffect(() => {
     if (accessToken) {
       window.localStorage.setItem(LOCAL_ACCESS_TOKEN_KEY, accessToken);
     }
+  }, [accessToken]);
+
+  React.useEffect(() => {
     if (refreshToken) {
       window.localStorage.setItem(LOCAL_REFRESH_TOKEN_KEY, refreshToken);
     }
+  }, [refreshToken]);
+
+  React.useEffect(() => {
     if (membershipId) {
       window.localStorage.setItem(LOCAL_MEMBERSHIP_ID, membershipId);
     }
-  }, [accessToken, refreshToken, membershipId]);
+  }, [membershipId]);
 
   const providerValue = React.useMemo(() => ({
     isLoading,

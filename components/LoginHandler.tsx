@@ -10,32 +10,37 @@ function LoginHandler() {
 
   React.useEffect(() => {
     if (sessionContext.isLoading) {
-      console.log('Not gonna happen');
+      console.log('Not gonna do anything because loading');
       return;
     }
 
+    if (sessionContext.isLoggedIn) {
+      console.log('Just redirect because user is logged in');
+      router.push('/dashboard');
+    }
+
     const doLogin = async () => {
-      if (router.query.code) {
-        console.log('Trying the login login');
-        try {
-          const usedCode = typeof router.query.code === 'string' ? router.query.code : router.query.code[0];
-          await sessionContext.login(usedCode);
-          router.push(`${router.asPath}/dashboard`);
-        } catch {
-          setError('We could not log you in. Please try again later.');
-        }
-      }
+      const { code } = router.query;
+
+      console.log('Trying the login login');
       try {
-        console.log('Trying the login refresh');
-        await sessionContext.refresh();
-        router.push(`${router.asPath}/dashboard`);
+        let usedCode: string | undefined;
+        if (code) {
+          usedCode = typeof code === 'string' ? code : code[0];
+        }
+        await sessionContext.login(usedCode);
+        return;
       } catch {
-        setError('We could not refresh your session. Try logging in again.');
+        setError('We could not log you in. Please try again later.');
       }
     };
 
     doLogin();
   }, [router, sessionContext]);
+
+  if (sessionContext.isLoading) {
+    return <div>Loading ...</div>;
+  }
 
   if (error) {
     return <div>{error}</div>;

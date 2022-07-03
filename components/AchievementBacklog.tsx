@@ -4,7 +4,8 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import AchievementBlock from './AchievementBlock';
-import { AchievementGroup, AchievementTracker } from '../types/achievements';
+import { AchievementGroup } from '../types/achievements';
+import { AchievementContext } from '../context/achievements';
 
 type AchievementBacklogDefinition = {
   [key in AchievementGroup]: {
@@ -17,10 +18,6 @@ interface TabPanelProps {
   children?: React.ReactNode;
   label: AchievementGroup;
   isHidden: boolean;
-}
-
-interface AchievementBacklogProps {
-  data?: AchievementTracker[];
 }
 
 const ACHIEVEMENT_BACKLOG_TABS: AchievementBacklogDefinition = {
@@ -66,7 +63,8 @@ function TabPanel({
   );
 }
 
-function AchievementBacklog({ data }: AchievementBacklogProps) {
+function AchievementBacklog() {
+  const achievementHandler = React.useContext(AchievementContext);
   const [selectedTab, setSelectedTab] = React.useState<number>(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -87,7 +85,7 @@ function AchievementBacklog({ data }: AchievementBacklogProps) {
       </Tabs>
       {Object.entries(ACHIEVEMENT_BACKLOG_TABS).map(([, value]) => (
         <TabPanel key={value.label} label={value.label} isHidden={value.index !== selectedTab}>
-          <AchievementBlock data={data} filter={value.label} />
+          <AchievementBlock data={achievementHandler.data} filter={value.label} />
         </TabPanel>
       ))}
     </div>

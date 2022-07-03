@@ -16,16 +16,25 @@ export type AchievementData = {
   priority?: AchievementPriority;
 };
 
-export type AchievementTracker = AchievementData & {
+export type InstancedAchievementData = AchievementData & {
   id: string;
-  checked: boolean;
-  isSuggested: boolean;
+  userId: string;
+  sourceId?: string;
+  checked?: boolean;
 };
 
-type AchievementResponse = {
-  data: AchievementTracker[];
+export type AchievementCollectionResponse = {
+  data: InstancedAchievementData[];
 };
 
-type AchievementErrorResponse = {
+export type AchievementCollectionErrorResponse = {
+  error: string;
+};
+
+export type AchievementResponse = {
+  data: InstancedAchievementData;
+};
+
+export type AchievementErrorResponse = {
   error: string;
 };

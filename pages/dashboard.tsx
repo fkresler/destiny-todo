@@ -6,10 +6,13 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Layout from '../components/Layout';
 import AchievementBacklog from '../components/AchievementBacklog';
-import { AchievementResponse, AchievementErrorResponse } from '../types/achievements';
+import {
+  AchievementCollectionResponse, AchievementCollectionErrorResponse,
+} from '../types/achievements';
+import { AchievementProvider } from '../context/achievements';
 
 const Dashboard: NextPage = function Dashboard() {
-  const { data, error } = useSWR<AchievementResponse, AchievementErrorResponse>(
+  const { data, error } = useSWR<AchievementCollectionResponse, AchievementCollectionErrorResponse>(
     '/api/achievements',
     (apiUrl: string) => fetch(apiUrl).then((res) => res.json()),
   );
@@ -36,17 +39,19 @@ const Dashboard: NextPage = function Dashboard() {
 
   return (
     <Layout>
-      <Typography variant="h4" gutterBottom component="h1">
-        My Dashboard
-      </Typography>
-      <Typography variant="h5" gutterBottom component="h2">
-        Focused achievements
-      </Typography>
-      <Divider variant="middle" />
-      <Typography variant="h5" gutterBottom component="h2">
-        Backlog
-      </Typography>
-      <AchievementBacklog data={data.data} />
+      <AchievementProvider initialData={data.data}>
+        <Typography variant="h4" gutterBottom component="h1">
+          My Dashboard
+        </Typography>
+        <Typography variant="h5" gutterBottom component="h2">
+          Focused achievements
+        </Typography>
+        <Divider variant="middle" />
+        <Typography variant="h5" gutterBottom component="h2">
+          Backlog
+        </Typography>
+        <AchievementBacklog />
+      </AchievementProvider>
     </Layout>
   );
 };

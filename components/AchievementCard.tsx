@@ -8,14 +8,14 @@ import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { AchievementTracker } from '../types/achievements';
+import { InstancedAchievementData } from '../types/achievements';
 
 interface AchievementCardProps {
-  tracker: AchievementTracker;
+  data: InstancedAchievementData;
 }
 
-function AchievementCard({ tracker }: AchievementCardProps) {
-  const { id, title, description } = tracker;
+function AchievementCard({ data }: AchievementCardProps) {
+  const { id, title, description } = data;
 
   const [isChecked, setIsChecked] = React.useState<boolean>(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -33,6 +33,10 @@ function AchievementCard({ tracker }: AchievementCardProps) {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(event.target.checked);
   };
+
+  if (isChecked) {
+    return null;
+  }
 
   return (
     <Box sx={{ minWidth: 275 }}>

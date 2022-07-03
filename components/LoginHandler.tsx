@@ -23,6 +23,9 @@ function LoginHandler() {
       const { code } = router.query;
 
       console.log(`Trying the login login with code ${code}`);
+      if (!code) {
+        sessionContext.goToExternalLogin();
+      }
       try {
         let usedCode: string | undefined;
         if (code) {

@@ -22,7 +22,7 @@ function LoginHandler() {
     const doLogin = async () => {
       const { code } = router.query;
 
-      console.log('Trying the login login');
+      console.log(`Trying the login login with code ${code}`);
       try {
         let usedCode: string | undefined;
         if (code) {

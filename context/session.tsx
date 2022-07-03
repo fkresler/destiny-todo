@@ -95,8 +95,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
       }
       const resultJson: BungieAuthorizeTokenResponse = await result.json();
       setAccessToken(resultJson.access_token);
-      setRefreshToken(resultJson.refresh_token);
       setMembershipId(resultJson.membership_id);
+      if (resultJson.refresh_token) {
+        window.localStorage.setItem(LAST_REFRESH_DATETIME_KEY, new Date().toString());
+        setRefreshToken(resultJson.refresh_token);
+      }
       setIsLoggedIn(true);
       setIsLoading(false);
     } catch (e) {

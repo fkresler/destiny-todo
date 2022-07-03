@@ -67,12 +67,18 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const login = React.useCallback(async (code?: string) => {
     console.log('Calling login');
 
+    if (isLoading) {
+      throw new Error('Should not start login when in loading state');
+    }
+
     if (isLoggedIn) {
-      throw new Error('User is already logged in');
+      console.error('We are logged in, redirecting to dashboard');
+      router.push('/dashboard');
     }
 
     if (!code) {
-      throw new Error('Logging in with Bungie API requires a code');
+      console.error('Cannnot start a login without a valid code');
+      redirectToExternalLogin();
     }
 
     try {
@@ -96,10 +102,14 @@ export function SessionProvider({ children }: SessionProviderProps) {
     } catch (e) {
       console.error('Error on login', e);
     }
-  }, [isLoggedIn]);
+  }, [isLoading, isLoggedIn, router, redirectToExternalLogin]);
 
   const refresh = React.useCallback(async () => {
     console.log('Calling refresh');
+
+    if (isLoading) {
+      throw new Error('Should not refresh while in loading state');
+    }
 
     if (!refreshToken) {
       throw new Error('Cannot refresh without token');
@@ -132,7 +142,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       console.error('Could not refresh current session, probably need to log in again');
       redirectToExternalLogin();
     }
-  }, [redirectToExternalLogin, refreshToken]);
+  }, [redirectToExternalLogin, isLoading, refreshToken]);
 
   const logout = React.useCallback(() => {
     window.localStorage.removeItem(LOCAL_ACCESS_TOKEN_KEY);
@@ -146,15 +156,18 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [router]);
 
   React.useEffect(() => {
-    console.log('Initial reading from localStorage');
-    const localAccessToken = window.localStorage.getItem(LOCAL_ACCESS_TOKEN_KEY);
-    const localRefreshToken = window.localStorage.getItem(LOCAL_REFRESH_TOKEN_KEY);
-    const localMembershipId = window.localStorage.getItem(LOCAL_MEMBERSHIP_ID);
-    setAccessToken(localAccessToken);
-    setMembershipId(localMembershipId);
-    setRefreshToken(localRefreshToken);
-    setIsLoading(false);
-  }, [refresh, redirectToExternalLogin]);
+    const initSessionFromLocalStorage = () => {
+      const localAccessToken = window.localStorage.getItem(LOCAL_ACCESS_TOKEN_KEY);
+      const localRefreshToken = window.localStorage.getItem(LOCAL_REFRESH_TOKEN_KEY);
+      const localMembershipId = window.localStorage.getItem(LOCAL_MEMBERSHIP_ID);
+      setAccessToken(localAccessToken);
+      setMembershipId(localMembershipId);
+      setRefreshToken(localRefreshToken);
+      setIsLoading(false);
+    };
+
+    initSessionFromLocalStorage();
+  }, []);
 
   React.useEffect(() => {
     if (accessToken) {
@@ -166,7 +179,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
     if (refreshToken) {
       window.localStorage.setItem(LOCAL_REFRESH_TOKEN_KEY, refreshToken);
     }
-  }, [refreshToken]);
+
+    // Try to init a refresh when the refresh token changes
+    refresh();
+  }, [refresh, refreshToken]);
 
   React.useEffect(() => {
     if (membershipId) {

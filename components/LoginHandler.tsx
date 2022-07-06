@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
-import { SessionContext } from '../context/session';
+import { SessionContext, LOGIN_AUTHORIZE_URL } from '../context/session';
 
 function LoginHandler() {
   const router = useRouter();
-  const {
-    isLoading, isLoggedIn, login, goToExternalLogin,
-  } = React.useContext(SessionContext);
+  const { isLoading, isLoggedIn, login } = React.useContext(SessionContext);
 
   const [error, setError] = React.useState<string | null>(null);
 
@@ -32,16 +30,17 @@ function LoginHandler() {
       goToDashboard();
       return;
     }
+
     const { code } = router.query;
     if (!code) {
       if (router.isReady) {
-        goToExternalLogin();
+        router.push(LOGIN_AUTHORIZE_URL);
       }
       return;
     }
 
     doLogin(code);
-  }, [router, isLoading, isLoggedIn, login, goToExternalLogin]);
+  }, [router, isLoading, isLoggedIn, login]);
 
   if (isLoading) {
     return <div>Loading ...</div>;

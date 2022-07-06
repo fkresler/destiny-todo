@@ -16,25 +16,24 @@ function LoginHandler() {
     };
 
     const doLogin = async (authCode: string | string[]) => {
-      console.log(`Handler: Trying the login login with code ${authCode}`);
       try {
         const usedCode = typeof authCode === 'string' ? authCode : authCode[0];
         await login(usedCode);
         goToDashboard();
       } catch (e) {
-        console.log('Handler: Error happened during login:', e);
         setError('We could not log you in. Please try again later.');
       }
     };
 
+    if (isLoading) {
+      return;
+    }
     if (isLoggedIn) {
-      console.log('Handler: Just redirect because user is logged in');
       goToDashboard();
       return;
     }
     const { code } = router.query;
     if (!code) {
-      console.log('Handler: No code was provided');
       if (router.isReady) {
         goToExternalLogin();
       }
@@ -42,7 +41,7 @@ function LoginHandler() {
     }
 
     doLogin(code);
-  }, [router, isLoggedIn, login, goToExternalLogin]);
+  }, [router, isLoading, isLoggedIn, login, goToExternalLogin]);
 
   if (isLoading) {
     return <div>Loading ...</div>;

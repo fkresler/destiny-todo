@@ -65,7 +65,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [router]);
 
   const login = React.useCallback(async (code?: string) => {
-    console.log('Context: Calling login');
     if (isLoading) {
       throw new Error('Should not start login when in loading state');
     }
@@ -86,11 +85,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
         body: `client_id=${process.env.NEXT_PUBLIC_BUNGIE_OAUTH_CLIENT_ID}&grant_type=authorization_code&code=${code}`,
       });
       if (!result.ok) {
-        console.log('Context: login result not ok', result);
         throw new Error('Login failed');
       }
       const resultJson: BungieAuthorizeTokenResponse = await result.json();
-      console.log('Context: Login result is', resultJson);
       setAccessToken(resultJson.access_token);
       setMembershipId(resultJson.membership_id);
       if (resultJson.refresh_token) {
@@ -99,14 +96,13 @@ export function SessionProvider({ children }: SessionProviderProps) {
       }
       setIsLoggedIn(true);
       setIsLoading(false);
-      console.log('Context: Login worked');
     } catch (e) {
-      console.error('Context: Error on login', e);
+      console.error('Sessioncontext: error on login', e);
+      throw e;
     }
   }, [isLoading, isLoggedIn]);
 
   const refresh = React.useCallback(async () => {
-    console.log('Context: Calling refresh');
     if (isLoading) {
       throw new Error('Should not refresh while in loading state');
     }
@@ -129,19 +125,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
         body: `grant_type=refresh_token&refreshToken=${refreshToken}`,
       });
       if (!result.ok) {
-        console.log('Context: refresh result is not oke', result);
         throw new Error('Refresh failed');
       }
       const resultJson: BungieRefreshTokenResponse = await result.json();
-      console.log('Context: refresh result is', resultJson);
       setRefreshToken(resultJson.refresh_token);
       setIsLoggedIn(true);
       setIsLoading(false);
       window.localStorage.setItem(LAST_REFRESH_DATETIME_KEY, new Date().toString());
-      console.log('Context: refresh successful');
     } catch (e) {
-      console.log('Context: refresh api call was not successful', e);
-      throw new Error('Api call was not successful');
+      console.error('Sessioncontext: error on refresh', e);
+      throw e;
     }
   }, [isLoading, refreshToken]);
 

@@ -3,42 +3,52 @@ import { useRouter } from 'next/router';
 import { SessionContext } from '../context/session';
 
 function LoginHandler() {
-  const router = useRouter();
-  const sessionContext = React.useContext(SessionContext);
+  const { query, push } = useRouter();
+  const {
+    isLoading, isLoggedIn, login, goToExternalLogin,
+  } = React.useContext(SessionContext);
 
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (sessionContext.isLoading) {
-      console.log('Not gonna do anything because loading');
-      return;
-    }
+    const goToDashboard = () => {
+      push('/dashboard');
+    };
 
-    if (sessionContext.isLoggedIn) {
-      console.log('Just redirect because user is logged in');
-      router.push('/dashboard');
-    }
-
-    const doLogin = async () => {
-      const { code } = router.query;
-
-      console.log(`Trying the login login with code ${code}`);
+    const doLogin = async (authCode: string | string[]) => {
+      console.log(`Handler: Trying the login login with code ${authCode}`);
       try {
-        let usedCode: string | undefined;
-        if (code) {
-          usedCode = typeof code === 'string' ? code : code[0];
-        }
-        await sessionContext.login(usedCode);
-        return;
-      } catch {
+        const usedCode = typeof authCode === 'string' ? authCode : authCode[0];
+        await login(usedCode);
+        goToDashboard();
+      } catch (e) {
+        console.log('Handler: Error happened during login:', e);
         setError('We could not log you in. Please try again later.');
       }
     };
 
-    doLogin();
-  }, [router, sessionContext]);
+    if (isLoading) {
+      console.log('Handler: Not gonna do anything because loading');
+      return;
+    }
 
-  if (sessionContext.isLoading) {
+    if (isLoggedIn) {
+      console.log('Handler: Just redirect because user is logged in');
+      goToDashboard();
+    }
+
+    const { code } = query;
+
+    if (!code) {
+      console.log('Handler: No code was provided');
+      goToExternalLogin();
+      return;
+    }
+
+    doLogin(code);
+  }, [query, push, isLoading, isLoggedIn, login, goToExternalLogin]);
+
+  if (isLoading) {
     return <div>Loading ...</div>;
   }
 

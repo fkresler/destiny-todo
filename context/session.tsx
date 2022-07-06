@@ -49,6 +49,13 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const router = useRouter();
 
+  const isLoginValid = (date: string): boolean => {
+    const currentDate = new Date().getTime();
+    const comparedDate = new Date(date).getTime();
+
+    return currentDate - comparedDate <= DEFAULT_REFRESH_TIMER;
+  };
+
   const login = React.useCallback(async (code?: string) => {
     if (isLoading) {
       throw new Error('Session data is still loading, no new login will be triggered');
@@ -60,8 +67,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
       throw new Error('No code for the login was provided, no login will be triggered');
     }
     const previousRefresh = window.localStorage.getItem(LAST_REFRESH_DATETIME_KEY);
-    if (previousRefresh
-      && ((new Date().getTime() - new Date(previousRefresh).getTime()) < DEFAULT_REFRESH_TIMER)) {
+    if (previousRefresh && isLoginValid(previousRefresh)) {
+      setIsLoggedIn(true);
       throw new Error(`Last refresh was less than ${DEFAULT_REFRESH_TIMER}ms ago`);
     }
 
@@ -102,8 +109,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
     const initSessionFromLocalStorage = () => {
       const localAccessToken = window.localStorage.getItem(LOCAL_ACCESS_TOKEN_KEY);
       const localMembershipId = window.localStorage.getItem(LOCAL_MEMBERSHIP_ID);
+      const previousRefresh = window.localStorage.getItem(LAST_REFRESH_DATETIME_KEY);
       setAccessToken(localAccessToken);
       setMembershipId(localMembershipId);
+      if (localAccessToken && previousRefresh && isLoginValid(previousRefresh)) {
+        setIsLoggedIn(true);
+      }
       setIsLoading(false);
     };
 

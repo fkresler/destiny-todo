@@ -1,6 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { BungieUserData, DatUserData, UserResponse } from '../../../types/users';
+import {
+  BungieUserData, BungieUserResponse, DatUserData, UserResponse,
+} from '../../../types/users';
 
 export default async function usersHandler(
   req: NextApiRequest,
@@ -26,24 +28,31 @@ export default async function usersHandler(
     lastLogin: new Date().toString(),
     lastAuth: 'asdfasdfasdf',
   };
-  let bungieData: BungieUserData = {};
+  let bungieData: BungieUserData;
 
   try {
-    const bungieUserApiUrl = `https://www.bungie.net/platform/User/GetBungieAccount/${id}/254/`;
-    const bungieResult = await fetch(bungieUserApiUrl, {
+    const bungieUserApiUrl = `https://www.bungie.net/platform/User/GetBungieNetUserById/${id}/`;
+    const bungieResponse = await fetch(bungieUserApiUrl, {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': apiKey,
       },
     });
-    bungieData = bungieResult.json() as BungieUserData;
+    const responseData = await bungieResponse.json() as BungieUserResponse;
+    bungieData = responseData.Response;
   } catch (e) {
-    console.error('Error while fetching Bungie data');
+    console.log('Error while fetching Bungie data', e);
+    res.status(500);
+    return;
   }
 
   const overallUserData = {
-    ...localData,
-    ...bungieData,
+    datUserData: {
+      ...localData,
+    },
+    bungieNetUser: {
+      ...bungieData,
+    },
   };
 
   res.status(200).json({

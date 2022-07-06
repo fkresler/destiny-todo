@@ -4,9 +4,30 @@ export type DatUserData = {
   lastAuth: string;
 };
 
-export type BungieUserData = {};
+export type BungieUserResponse = {
+  Response: BungieUserData;
+  ErrorCode: number;
+  ThrottleSeconds: number;
+  ErrorStatus: 'Success' | 'Error';
+};
 
-export type UserData = DatUserData & BungieUserData;
+export type BungieUserData = {
+  membershipId: string;
+  uniqueName: string;
+  displayName: string;
+  profilePicture: number;
+  profileTheme: number;
+  userTitle: number;
+  about: string;
+  locale: string;
+  profilePicturePath: string;
+  statusText: string;
+};
+
+export type UserData = {
+  datUserData: DatUserData;
+  bungieNetUser: BungieUserData;
+};
 
 export type UserResponse = {
   data: UserData;

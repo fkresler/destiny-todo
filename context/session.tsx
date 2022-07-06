@@ -66,15 +66,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const login = React.useCallback(async (code?: string) => {
     console.log('Context: Calling login');
-
     if (isLoading) {
       throw new Error('Should not start login when in loading state');
     }
-
     if (isLoggedIn) {
       throw new Error('We are logged in, redirecting to dashboard');
     }
-
     if (!code) {
       throw new Error('You need to provide a code');
     }
@@ -93,6 +90,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         throw new Error('Login failed');
       }
       const resultJson: BungieAuthorizeTokenResponse = await result.json();
+      console.log('Context: Login result is', resultJson);
       setAccessToken(resultJson.access_token);
       setMembershipId(resultJson.membership_id);
       if (resultJson.refresh_token) {
@@ -109,15 +107,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const refresh = React.useCallback(async () => {
     console.log('Context: Calling refresh');
-
     if (isLoading) {
       throw new Error('Should not refresh while in loading state');
     }
-
     if (!refreshToken) {
       throw new Error('Cannot refresh without token');
     }
-
     const previousRefresh = window.localStorage.getItem(LAST_REFRESH_DATETIME_KEY);
     if (previousRefresh
       && ((new Date().getTime() - new Date(previousRefresh).getTime()) < REFRESH_TIMER)) {
@@ -138,6 +133,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         throw new Error('Refresh failed');
       }
       const resultJson: BungieRefreshTokenResponse = await result.json();
+      console.log('Context: refresh result is', resultJson);
       setRefreshToken(resultJson.refresh_token);
       setIsLoggedIn(true);
       setIsLoading(false);
@@ -182,16 +178,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   React.useEffect(() => {
     if (refreshToken) {
-      console.log('Context: refreshToken changed');
       window.localStorage.setItem(LOCAL_REFRESH_TOKEN_KEY, refreshToken);
-      // Try to init a refresh when the refresh token changes
-      try {
-        refresh();
-      } catch (e) {
-        console.error('Context: refresh failed', e);
-      }
     }
-  }, [refresh, refreshToken]);
+  }, [refreshToken]);
 
   React.useEffect(() => {
     if (membershipId) {

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { SessionContext } from '../context/session';
 
 function LoginHandler() {
-  const { query, push } = useRouter();
+  const router = useRouter();
   const {
     isLoading, isLoggedIn, login, goToExternalLogin,
   } = React.useContext(SessionContext);
@@ -12,7 +12,7 @@ function LoginHandler() {
 
   React.useEffect(() => {
     const goToDashboard = () => {
-      push('/dashboard');
+      router.push('/dashboard');
     };
 
     const doLogin = async (authCode: string | string[]) => {
@@ -31,14 +31,12 @@ function LoginHandler() {
       console.log('Handler: Not gonna do anything because loading');
       return;
     }
-
     if (isLoggedIn) {
       console.log('Handler: Just redirect because user is logged in');
       goToDashboard();
+      return;
     }
-
-    const { code } = query;
-
+    const { code } = router.query;
     if (!code) {
       console.log('Handler: No code was provided');
       goToExternalLogin();
@@ -46,7 +44,7 @@ function LoginHandler() {
     }
 
     doLogin(code);
-  }, [query, push, isLoading, isLoggedIn, login, goToExternalLogin]);
+  }, [router, isLoading, isLoggedIn, login, goToExternalLogin]);
 
   if (isLoading) {
     return <div>Loading ...</div>;

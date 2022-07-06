@@ -68,17 +68,14 @@ export function SessionProvider({ children }: SessionProviderProps) {
     console.log('Context: Calling login');
 
     if (isLoading) {
-      console.log('Context: login loading still');
       throw new Error('Should not start login when in loading state');
     }
 
     if (isLoggedIn) {
-      console.log('Context: login already logged in');
       throw new Error('We are logged in, redirecting to dashboard');
     }
 
     if (!code) {
-      console.log('Context: login no code available');
       throw new Error('You need to provide a code');
     }
 
@@ -106,7 +103,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setIsLoading(false);
       console.log('Context: Login worked');
     } catch (e) {
-      console.error('Error on login', e);
+      console.error('Context: Error on login', e);
     }
   }, [isLoading, isLoggedIn]);
 
@@ -114,19 +111,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
     console.log('Context: Calling refresh');
 
     if (isLoading) {
-      console.log('Context: on refresh still loading');
       throw new Error('Should not refresh while in loading state');
     }
 
     if (!refreshToken) {
-      console.log('Context: on refresh no token was found');
       throw new Error('Cannot refresh without token');
     }
 
     const previousRefresh = window.localStorage.getItem(LAST_REFRESH_DATETIME_KEY);
     if (previousRefresh
       && ((new Date().getTime() - new Date(previousRefresh).getTime()) < REFRESH_TIMER)) {
-      console.log('Context: on refresh timer not long enough ago');
       throw new Error(`Last refresh was less than ${REFRESH_TIMER}ms ago`);
     }
 
@@ -149,11 +143,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setIsLoading(false);
       window.localStorage.setItem(LAST_REFRESH_DATETIME_KEY, new Date().toString());
       console.log('Context: refresh successful');
-    } catch {
-      console.error('Could not refresh current session, probably need to log in again');
-      redirectToExternalLogin();
+    } catch (e) {
+      console.log('Context: refresh api call was not successful', e);
+      throw new Error('Api call was not successful');
     }
-  }, [redirectToExternalLogin, isLoading, refreshToken]);
+  }, [isLoading, refreshToken]);
 
   const logout = React.useCallback(() => {
     window.localStorage.removeItem(LOCAL_ACCESS_TOKEN_KEY);
@@ -168,7 +162,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   React.useEffect(() => {
     const initSessionFromLocalStorage = () => {
-      console.log('Context: init session from local storage');
       const localAccessToken = window.localStorage.getItem(LOCAL_ACCESS_TOKEN_KEY);
       const localRefreshToken = window.localStorage.getItem(LOCAL_REFRESH_TOKEN_KEY);
       const localMembershipId = window.localStorage.getItem(LOCAL_MEMBERSHIP_ID);
@@ -176,7 +169,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
       setMembershipId(localMembershipId);
       setRefreshToken(localRefreshToken);
       setIsLoading(false);
-      console.log('Context: init session from local storage finished');
     };
 
     initSessionFromLocalStorage();
@@ -189,13 +181,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [accessToken]);
 
   React.useEffect(() => {
-    console.log('Context: refreshToken changed');
     if (refreshToken) {
+      console.log('Context: refreshToken changed');
       window.localStorage.setItem(LOCAL_REFRESH_TOKEN_KEY, refreshToken);
+      // Try to init a refresh when the refresh token changes
+      try {
+        refresh();
+      } catch (e) {
+        console.error('Context: refresh failed', e);
+      }
     }
-
-    // Try to init a refresh when the refresh token changes
-    refresh();
   }, [refresh, refreshToken]);
 
   React.useEffect(() => {

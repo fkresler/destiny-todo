@@ -27,10 +27,6 @@ function LoginHandler() {
       }
     };
 
-    if (isLoading) {
-      console.log('Handler: Not gonna do anything because loading');
-      return;
-    }
     if (isLoggedIn) {
       console.log('Handler: Just redirect because user is logged in');
       goToDashboard();
@@ -39,12 +35,14 @@ function LoginHandler() {
     const { code } = router.query;
     if (!code) {
       console.log('Handler: No code was provided');
-      goToExternalLogin();
+      if (router.isReady) {
+        goToExternalLogin();
+      }
       return;
     }
 
     doLogin(code);
-  }, [router, isLoading, isLoggedIn, login, goToExternalLogin]);
+  }, [router, isLoggedIn, login, goToExternalLogin]);
 
   if (isLoading) {
     return <div>Loading ...</div>;

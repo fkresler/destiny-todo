@@ -35,9 +35,14 @@ function Header() {
           Destiny Achievement Tracker
         </Typography>
         {isLoggedIn && (
-        <Link href="/dashboard">
-          <Button color="inherit">My Dashboard</Button>
-        </Link>
+          <div>
+            <Link href="/dashboard">
+              <Button color="inherit">My Dashboard</Button>
+            </Link>
+            <Link href="/profile">
+              <Button color="inherit">Profile</Button>
+            </Link>
+          </div>
         )}
         {!isLoggedIn && (
           <Link href="/login">

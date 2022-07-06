@@ -32,3 +32,7 @@ export type UserData = {
 export type UserResponse = {
   data: UserData;
 };
+
+export type UserErrorResponse = {
+  error: string;
+};
